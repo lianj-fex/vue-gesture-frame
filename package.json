@@ -1,0 +1,35 @@
+{
+  "name": "@lianj/vue-gesture-frame",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "author": "Harvey Woo",
+  "license": "MIT",
+  "scripts": {
+    "start": "parcel start ./demo/index.html -d ./dev_dist",
+    "build": "parcel build ./src/index.js",
+    "prepublish": "npm run build"
+  },
+  "browserslist": [
+    "last 1 Chrome versions"
+  ],
+  "devDependencies": {
+    "@babel/core": "^7.0.0-0",
+    "@babel/plugin-proposal-class-properties": "^7.5.5",
+    "@babel/plugin-proposal-function-bind": "^7.2.0",
+    "@babel/plugin-transform-runtime": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
+    "@lianj/filters": "^1.0.7",
+    "@lianj-fex/dollar": "^0.6.3",
+    "@vue/component-compiler-utils": "^3.0.0",
+    "parcel-bundler": "^1.12.3",
+    "stylus": "^0.54.5",
+    "stylus-loader": "^3.0.2",
+    "vue-template-compiler": "^2.6.10"
+  },
+  "dependencies": {
+    "@babel/runtime-corejs2": "^7.5.5",
+    "hammerjs": "^2.0.8",
+    "vue": "^2.6.10",
+    "vue-hot-reload-api": "^2.3.3"
+  }
+}
