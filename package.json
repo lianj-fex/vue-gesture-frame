@@ -10,7 +10,7 @@
   "scripts": {
     "start": "parcel start ./demo/index.html -d ./dev_dist",
     "build": "parcel build ./src/index.js",
-    "prepublish": "npm run build"
+    "prepublish": "yarn build"
   },
   "browserslist": [
     "last 1 Chrome versions"
