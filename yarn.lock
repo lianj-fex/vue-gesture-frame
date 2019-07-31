@@ -876,30 +876,6 @@
   resolved "https://registry.yarnpkg.com/@iarna/toml/-/toml-2.2.3.tgz#f060bf6eaafae4d56a7dac618980838b0696e2ab"
   integrity sha512-FmuxfCuolpLl0AnQ2NHSzoUKWEJDFl63qXjzdoWBVyFCXzMGm1spBzk7LeHNoVCiWCF7mRVms9e6jEV9+MoPbg==
 
-"@lianj-fex/dollar@^0.6.3":
-  version "0.6.3"
-  resolved "https://registry.yarnpkg.com/@lianj-fex/dollar/-/dollar-0.6.3.tgz#96b5610649b0ccfd79fe77b89b49843ecdc762e6"
-  integrity sha512-6gCsBl14/8avyb7G8gdBSLvlM1zQSp0aZiE1Vo0aWGB2ytcejwqaL9tyq0tQ2ndP1X4OEAdOAXT8a2qaHzjlOQ==
-  dependencies:
-    xhr2 "^0.1.4"
-
-"@lianj/dollar@^1.0.1":
-  version "1.0.6"
-  resolved "http://113.108.139.178:17001/@lianj/dollar/download/@lianj/dollar-1.0.6.tgz#6bcafc7cdebd448d75997184d74748cb48702439"
-  integrity sha1-a8r8fN69RI11mXGE10dIy0hwJDk=
-  dependencies:
-    jquery "^1.12.0"
-    xhr2 "^0.1.4"
-
-"@lianj/filters@^1.0.7":
-  version "1.0.7"
-  resolved "http://113.108.139.178:17001/@lianj/filters/download/@lianj/filters-1.0.7.tgz#691115664dff32d54f94f0c439a62747882b3e13"
-  integrity sha1-aREVZk3/MtVPlPDEOaYnR4grPhM=
-  dependencies:
-    "@lianj/dollar" "^1.0.1"
-    moment "^2.18.1"
-    nzh "^1.0.0"
-
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/@mrmlnc/readdir-enhanced/-/readdir-enhanced-2.2.1.tgz#524af240d1a360527b730475ecfa1344aa540dde"
@@ -3126,11 +3102,6 @@ isstream@~0.1.2:
   resolved "https://registry.yarnpkg.com/isstream/-/isstream-0.1.2.tgz#47e63f7af55afa6f92e1500e690eb8b8529c099a"
   integrity sha1-R+Y/evVa+m+S4VAOaQ64uFKcCZo=
 
-jquery@^1.12.0:
-  version "1.12.4"
-  resolved "https://registry.yarnpkg.com/jquery/-/jquery-1.12.4.tgz#01e1dfba290fe73deba77ceeacb0f9ba2fec9e0c"
-  integrity sha1-AeHfuikP5z3rp3zurLD5ui/sngw=
-
 js-beautify@^1.8.9:
   version "1.10.1"
   resolved "https://registry.yarnpkg.com/js-beautify/-/js-beautify-1.10.1.tgz#bdfe738ddbcaa12e4fced5af2d7cfad59f60ac0a"
@@ -3507,11 +3478,6 @@ mkdirp@0.5.x, mkdirp@^0.5.0, mkdirp@^0.5.1, mkdirp@~0.5.1:
   dependencies:
     minimist "0.0.8"
 
-moment@^2.18.1:
-  version "2.24.0"
-  resolved "https://registry.yarnpkg.com/moment/-/moment-2.24.0.tgz#0d055d53f5052aa653c9f6eb68bb5d12bf5c2b5b"
-  integrity sha512-bV7f+6l2QigeBBZSM/6yTNq4P2fNpSWj/0e7jQcy87A8e7o2nAfP/34/2ky5Vw4B9S446EtIhodAzkFCcR4dQg==
-
 ms@2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
@@ -3694,11 +3660,6 @@ nwsapi@^2.1.4:
   version "2.1.4"
   resolved "https://registry.yarnpkg.com/nwsapi/-/nwsapi-2.1.4.tgz#e006a878db23636f8e8a67d33ca0e4edf61a842f"
   integrity sha512-iGfd9Y6SFdTNldEy2L0GUhcarIutFmk+MPWIn9dmj8NMIup03G08uUF2KGbbmv/Ux4RT0VZJoP/sVbWA6d/VIw==
-
-nzh@^1.0.0:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/nzh/-/nzh-1.0.4.tgz#bded5492cd7148fa5fe1c809fa61932a899769c5"
-  integrity sha512-A1qQSJTctuzmNlAAqV8AcvcOcsGn0iBbRn2Jhw4KkEFCDkXd5YV7SkfPQ6fw6fGVtJzo6++sGS/W1JZizRmCNQ==
 
 oauth-sign@~0.9.0:
   version "0.9.0"
@@ -5638,11 +5599,6 @@ ws@^7.0.0:
   integrity sha512-o41D/WmDeca0BqYhsr3nJzQyg9NF5X8l/UdnFNux9cS3lwB+swm8qGWX5rn+aD6xfBU3rGmtHij7g7x6LxFU3A==
   dependencies:
     async-limiter "^1.0.0"
-
-xhr2@^0.1.4:
-  version "0.1.4"
-  resolved "https://registry.yarnpkg.com/xhr2/-/xhr2-0.1.4.tgz#7f87658847716db5026323812f818cadab387a5f"
-  integrity sha1-f4dliEdxbbUCYyOBL4GMras4el8=
 
 xml-name-validator@^3.0.0:
   version "3.0.0"
