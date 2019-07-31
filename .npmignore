@@ -1,2 +1,3 @@
 .cache
 dev_dist
+.babelrc
