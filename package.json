@@ -1,9 +1,12 @@
 {
-  "name": "@lianj/vue-gesture-frame",
+  "name": "@lianj-fex/vue-gesture-frame",
   "version": "0.1.0",
   "main": "dist/index.js",
   "author": "Harvey Woo",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "start": "parcel start ./demo/index.html -d ./dev_dist",
     "build": "parcel build ./src/index.js",
