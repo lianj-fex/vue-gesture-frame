@@ -7,10 +7,10 @@
             <div class="img" :key="`${i1}-${i2}`" :class="{current: currentItem === item}" :style="{ backgroundSize: mode, backgroundImage: url(getImageUrl(item, prevItem)) }"/>
           </template>
         </template>
-        <slot name="loading" v-if="!debounceCurrentItemLoaded" :progress="progress" />
+        <slot name="loading" v-if="debounceCurrentItemLoading" :progress="progress" />
       </div>
     </div>
-    <slot :showings="btnShowings" :bindings="btnBindings"></slot>
+    <slot :showings="btnShowings" :bindings="btnBindings" :reload="reload.bind(this)" :error="error"></slot>
   </div>
 </template>
 <style lang="stylus" scoped>
@@ -176,12 +176,12 @@
       }, {})
 
       return {
+        error: null,
         prevIndex: this.value,
         btnBindings,
         transform: DEFAULT_TRANSFORM,
         normalizeItems: undefined,
-        debounceCurrentItemTotallyLoaded: false,
-        debounceCurrentItemLoaded: false,
+        debounceCurrentItemLoading: undefined
       }
     },
     computed: {
@@ -245,11 +245,16 @@
       currentItem() {
         return this.normalizeItems[this.value[0]][this.value[1]]
       },
-      currentItemLoaded() {
-        return !(this.currentItem.thumb && !this.currentItem.thumbLoaded ||
-          !this.currentItem.thumb && !this.currentItem.loaded)
+      currentItemLoading() {
+        return this.currentItem.thumb ? this.currentItem.thumbLoading : this.currentItem.loading
       },
-      currentItemTotallyLoaded() {
+      currentItemThumbLoading() {
+        return this.currentItem.thumbLoaded
+      },
+      currentItemLoaded() {
+        return this.currentItem.thumb ? this.currentItem.thumbLoaded : this.currentItem.loaded
+      },
+      currentItemUrlLoaded() {
         return this.currentItem.loaded
       },
       prevItem() {
@@ -260,6 +265,9 @@
       }
     },
     methods: {
+      reload() {
+        return this._load(this._getLoadParams())
+      },
       getImageUrl(item, prevItem) {
         return (
           item.loaded ? item.url : 
@@ -376,78 +384,91 @@
         loop(items, (item, indexs) => {
           item.thumbLoaded = false
           item.loaded = false
+          item.thumbLoading = true
+          item.loading = true
         })
         this.normalizeItems = items
       }, {
         immediate: true
       })
 
-      this.$watch('currentItemTotallyLoaded', debounce(loaded => {
-        this.debounceCurrentItemTotallyLoaded = loaded
-      }, 1000), {
-        immediate: true
-      })
-
-      this.$watch('currentItemLoaded', debounce(loaded => {
-        this.debounceCurrentItemLoaded = loaded
+      this.$watch('currentItemLoading', debounce(loading => {
+        console.log(loading)
+        this.debounceCurrentItemLoading = loading
       }, 1000), {
         immediate: true
       })
 
       const sortHandler = (a, b) => a.priority - b.priority
 
-      let queueRunner = new QueueRunner([], 2)
-      this.$watch(
-        () => [this.lengths, this.normalizeItems, this.value, this.precacheRadius, this.cycle, this.thumbPriorityFactor], 
-        async ([lengths, items, value, precacheRadius, cycle, thumbPriorityFactor]) => {
-          const queue = []
-          const otherQueue = []
-          loop(items, (item, indexs) => {
-            const dy = getIndexDistance(value[0], indexs[0], lengths[0], cycle[0])
-            const dx = getIndexDistance(value[1], indexs[1], lengths[1], cycle[1])
-            const priority = getPrecachePriority([dy, dx], precacheRadius)
+      this._load = async ([lengths, items, value, precacheRadius, cycle, thumbPriorityFactor]) => {
+        this.error = null
+        const queue = []
+        const otherQueue = []
+        loop(items, (item, indexs) => {
+          const dy = getIndexDistance(value[0], indexs[0], lengths[0], cycle[0])
+          const dx = getIndexDistance(value[1], indexs[1], lengths[1], cycle[1])
+          const priority = getPrecachePriority([dy, dx], precacheRadius)
 
-            if (!item.loaded) {
-              const loadImage = async () => {
+          if (!item.loaded) {
+            const loadImage = async () => {
+              item.loading = true
+              try {
                 await precacheImage(item.url)
                 item.loaded = true
-              }
-              loadImage.priority = priority
-              if (loadImage.priority < 1) {
-                queue.push(loadImage)
-              } else {
-                otherQueue.push(loadImage)
+              } finally {
+                item.loading = false
               }
             }
-
-            if (item.thumb && !item.thumbLoaded) {
-              const loadThumb = async () => {
-                await precacheImage(item.thumb)
-                item.thumbLoaded = true
-              }
-              loadThumb.priority = priority / thumbPriorityFactor
-              if (loadThumb.prototype < 1) {
-                queue.push(loadThumb)
-              } else {
-                otherQueue.push(loadThumb)
-              }
-            }
-
-          })
-          queue.sort(sortHandler)
-          try {
-            await queueRunner.run(queue)
-            otherQueue.sort(sortHandler)
-            await queueRunner.run(otherQueue)
-          } catch(e) {
-            if (e === QueueRunner.breakError) {
-              // console.info(e.message)
+            loadImage.priority = priority
+            if (loadImage.priority < 1) {
+              queue.push(loadImage)
             } else {
-              throw e
+              otherQueue.push(loadImage)
             }
           }
+
+          if (item.thumb && !item.thumbLoaded) {
+            const loadThumb = async () => {
+              item.thumbLoading = true
+              try {
+                await precacheImage(item.thumb)
+              } finally {
+                item.thumbLoading = false
+              }
+              item.thumbLoaded = true
+            }
+            loadThumb.priority = priority / thumbPriorityFactor
+            if (loadThumb.prototype < 1) {
+              queue.push(loadThumb)
+            } else {
+              otherQueue.push(loadThumb)
+            }
+          }
+
+        })
+        queue.sort(sortHandler)
+        try {
+          await queueRunner.run(queue)
+          otherQueue.sort(sortHandler)
+          await queueRunner.run(otherQueue)
+        } catch(e) {
+          if (e === QueueRunner.breakError) {
+            // console.info(e.message)
+          } else {
+            this.error = e
+            throw e
+          }
+        }
         // console.log(flattenItems)
-      }, {
+      }
+
+      this._getLoadParams = () => [this.lengths, this.normalizeItems, this.value, this.precacheRadius, this.cycle, this.thumbPriorityFactor]
+
+      let queueRunner = new QueueRunner([], 2)
+      this.$watch(
+        this._getLoadParams, 
+        this._load, {
         immediate: true
       })
     }
