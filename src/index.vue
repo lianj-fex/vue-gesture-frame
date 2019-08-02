@@ -129,9 +129,9 @@
       cycle: {
         default: () => [false, true]
       },
-      // 是否在请求错误的时候中断队列的加载
-      keepLoadingWhenError: {
-        default: false,
+      // 同时容忍的最大错误的数量，大于此值中断队列的加载
+      maxNumberOfError: {
+        default: 1,
       },
       // 当前下标，类型 [number, number]
       value: {
@@ -471,7 +471,7 @@
                 item.loaded = true
               } catch(e) {
                 item.error = e
-                if (!this.keepLoadingWhenError) throw e
+                if (this.errors.length >= this.maxNumberOfError) throw e
               } finally {
                 item.loading = false
               }
@@ -493,7 +493,7 @@
                 item.thumbLoaded = true
               } catch(e) {
                 item.thumbError = e
-                if (!this.keepLoadingWhenError) throw e
+                if (this.errors.length >= this.maxNumberOfError) throw e
               } finally {
                 item.thumbLoading = false
               }

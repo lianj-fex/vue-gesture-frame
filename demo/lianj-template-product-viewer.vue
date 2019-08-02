@@ -125,8 +125,8 @@
       thumbScaleFactor: {
         default: 0.2
       },
-      keepLoadingWhenError: {
-        default: true
+      maxNumberOfError: {
+        default: 3
       }
     },
     data: () => ({
