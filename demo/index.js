@@ -5,7 +5,7 @@ import generateManyDimensionsArray from './generate-many-dimensions-array'
 const baseUrl = 'https://image.lianj.com/for-huiyang/product/0/1/1221/image/'
 const items = generateManyDimensionsArray([3, 36], ds => {
   return {
-    url: `${baseUrl}${ds.map(i => i + 1).join('-')}x.png`,
+    url: `${baseUrl}${ds.map(i => i + 1).join('-')}.png`,
   }
 })
 

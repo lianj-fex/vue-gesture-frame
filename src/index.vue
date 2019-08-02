@@ -336,7 +336,7 @@
       const el = this.$refs.container
       const mc = new Hammer.Manager(el)
 
-      mc.add(new Hammer.Pan({ threshold: 0, pointers: 0 }))
+      mc.add(new Hammer.Pan({ threshold: 13, pointers: 0 }))
       mc.add(new Hammer.Pinch({ threshold: 0 }))
 
       let initTransform

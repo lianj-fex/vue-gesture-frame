@@ -12,9 +12,7 @@
     "build": "parcel build ./src/index.js",
     "prepublish": "yarn build"
   },
-  "browserslist": [
-    "last 1 Chrome versions"
-  ],
+  "browserslist": "> 0.25%",
   "devDependencies": {
     "@babel/core": "^7.0.0-0",
     "@babel/plugin-proposal-class-properties": "^7.5.5",
