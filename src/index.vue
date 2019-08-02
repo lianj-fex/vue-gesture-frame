@@ -309,7 +309,7 @@
         }
       },
       stepAxis(axisIndex = 0, step = 1) {
-        this.setValue(this.getValue(axisIndex, this.normalizeAxisValue(axisIndex, this.value[axis] + step)))
+        this.setValue(this.getValue(axisIndex, this.normalizeAxisValue(axisIndex, this.value[axisIndex] + step)))
       },
       normalizeAxisValue(axisIndex, value) {
         return getIndex(value, this.lengths[axisIndex], this.cycle[axisIndex])
