@@ -165,6 +165,7 @@
         }
 
         async function down(e) {
+          e.preventDefault()
           const document = e.target.ownerDocument
           if (!document) return
           const index = vm.value

@@ -17,10 +17,10 @@
     </template>
     <template slot-scope="{ showings, bindings, errors }">
       {{ errors.length > 2 && errors[0].message }}
-      <button type="button" v-if="showings.down" v-on="bindings.down" class="btn-down">向下</button>
-      <button type="button" v-if="showings.up" v-on="bindings.up" class="btn-up">向上</button>
-      <button type="button" v-if="showings.right" v-on="bindings.right" class="btn-right">向右</button>
-      <button type="button" v-if="showings.left" v-on="bindings.left" class="btn-left">向左</button>
+      <div v-if="showings.down" v-on="bindings.down" class="btn-down">向下</div>
+      <div v-if="showings.up" v-on="bindings.up" class="btn-up">向上</div>
+      <div v-if="showings.right" v-on="bindings.right" class="btn-right">向右</div>
+      <div v-if="showings.left" v-on="bindings.left" class="btn-left">向左</div>
     </template>
     </gesture-frame>
   </div>
@@ -33,6 +33,10 @@
     position absolute
     z-index 1
     user-select none
+    touch-action none
+    user-select none
+    -webkit-user-drag none
+    -webkit-tap-highlight-color rgba(0, 0, 0, 0)
   .btn-left
     left 5px
     top 50%
