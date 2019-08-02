@@ -5,6 +5,7 @@ export function precacheImage(url) {
     const img = new Image()
     img.onload = () => res(url)
     img.onerror = () => {
+      delete imagePrecachePromise[url]
       const error = new Error(`Can\'t not load image: ${url}, please validate provided url and check network status`)
       rej(error)
     }

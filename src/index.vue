@@ -7,10 +7,10 @@
             <div class="img" :key="`${i1}-${i2}`" :class="{current: currentItem === item}" :style="{ backgroundSize: mode, backgroundImage: url(getImageUrl(item, prevItem)) }"/>
           </template>
         </template>
-        <slot name="loading" v-if="debounceCurrentItemLoading" :progress="progress" />
       </div>
     </div>
-    <slot :showings="btnShowings" :bindings="btnBindings" :reload="reload.bind(this)" :error="error"></slot>
+    <slot name="loading" v-if="debounceCurrentItemLoading" :progress="progress" ></slot>
+    <slot :showings="btnShowings" :bindings="btnBindings" :reload="reload.bind(this)" :errors="errors" ></slot>
   </div>
 </template>
 <style lang="stylus" scoped>
@@ -79,6 +79,9 @@
     }
   }
 
+  function getItemError(item) {
+    return item.thumb ? item.thumbError : item.error
+  }
 
   export default {
     model: {
@@ -126,6 +129,10 @@
       cycle: {
         default: () => [false, true]
       },
+      // 是否在请求错误的时候中断队列的加载
+      keepLoadingWhenError: {
+        default: false,
+      },
       // 当前下标，类型 [number, number]
       value: {
         type: Array,
@@ -133,7 +140,8 @@
       },
     },
     data() {
-      let animation
+      const animation = new Animation()
+      this._animation = animation
       const vm = this
 
       const btnParams = { 
@@ -147,7 +155,10 @@
         if (vm.autoSpeed[axisIndex] === false) {
           memo[k] = {
             click() {
-              vm.stepAxis(axisIndex, step)
+              try {
+                vm.validateActionable()
+                vm.stepAxis(axisIndex, step)
+              } catch(e) {}
             }
           }
           return memo
@@ -157,15 +168,13 @@
           const document = e.target.ownerDocument
           if (!document) return
           const index = vm.value
-          animation = new Animation((t) => {
-            const speed = 12/1000 // 12 frame/ms
+          animation.start((t) => {
+            vm.validateActionable()
             vm.setAxisValue(axisIndex, index[axisIndex] + t * vm.autoSpeed[axisIndex] * step)
-          })
-          animation.start().catch((e) => {
-            // console.info(e.message)
-          })
+          }).catch((e) => {})
           await waitUntil(document, ['mouseup', 'touchend'])
           animation.stop()
+
         }
         memo[k] = {
           mousedown: down,
@@ -176,31 +185,30 @@
       }, {})
 
       return {
-        error: null,
         prevIndex: this.value,
         btnBindings,
         transform: DEFAULT_TRANSFORM,
         normalizeItems: undefined,
-        debounceCurrentItemLoading: undefined
+        debounceCurrentItemLoading: undefined,
+        // 最后一次设置value的轴与方向 [ axis, direction ]
+        lastSetAxis: [this.value.length - 1, 1]
       }
     },
     computed: {
       progress() {
         let total = 0
         let loaded = 0
-        this.normalizeItems.forEach(arr => {
-          arr.forEach((item) => {
-            if (item.thumb) {
-              total ++
-            }
+        loop(this.normalizeItems, item => {
+          if (item.thumb) {
             total ++
-            if (item.loaded) {
-              loaded++
-            }
-            if (item.thumbLoaded) {
-              loaded ++
-            }
-          })
+          }
+          total ++
+          if (item.loaded) {
+            loaded++
+          }
+          if (item.thumbLoaded) {
+            loaded ++
+          }
         })
         return {
           total, loaded
@@ -248,11 +256,8 @@
       currentItemLoading() {
         return this.currentItem.thumb ? this.currentItem.thumbLoading : this.currentItem.loading
       },
-      currentItemThumbLoading() {
-        return this.currentItem.thumbLoaded
-      },
-      currentItemLoaded() {
-        return this.currentItem.thumb ? this.currentItem.thumbLoaded : this.currentItem.loaded
+      currentItemError() {
+        return this.currentItem.thumb ? this.currentItem.thumbError : this.currentItem.error
       },
       currentItemUrlLoaded() {
         return this.currentItem.loaded
@@ -262,7 +267,16 @@
       },
       lengths() {
         return [this.normalizeItems.length, this.normalizeItems[0].length]
-      }
+      },
+      errors() {
+        const errors = []
+        loop(this.normalizeItems, (item) => {
+          const e = getItemError(item)
+          if (e)
+            errors.push(e)
+        })
+        return errors
+      },
     },
     methods: {
       reload() {
@@ -273,7 +287,7 @@
           item.loaded ? item.url : 
           item.thumb && item.thumbLoaded ? item.thumb :
           prevItem.loaded ? prevItem.url :
-          prevItem.thumb && prevItem.thumbLoaded ? item.thumb :
+          prevItem.thumb && prevItem.thumbLoaded ? prevItem.thumb :
           '__blank'
         )
       },
@@ -289,26 +303,33 @@
       reset() {
         this.transform = DEFAULT_TRANSFORM
       },
-      stepAxis(axisIndex = 0, step = 1) {
-        this.setAxisValue(axisIndex, this.value[axisIndex] + step)
-      },
-      setAxisValue(axisIndex, value) {
-        if (!this.currentItemLoaded) {
+      validateActionable() {
+        if (this.currentItemLoading) {
           throw new Error('当前图片正在加载中')
         }
-        const valueArr = this.value.slice()
-        valueArr[axisIndex] = parseInt(value)
-        this.setValue(valueArr)
+      },
+      stepAxis(axisIndex = 0, step = 1) {
+        this.setValue(this.getValue(axisIndex, this.normalizeAxisValue(axisIndex, this.value[axis] + step)))
+      },
+      normalizeAxisValue(axisIndex, value) {
+        return getIndex(value, this.lengths[axisIndex], this.cycle[axisIndex])
+      },
+      getValue(axisIndex, axisValue) {
+        const value = this.value.slice()
+        value[axisIndex] = parseInt(axisValue)
+        return value
       },
       setValue(value) {
-        value = value.slice()
-        this.value.forEach((_, axis) => {
-          value[axis] = getIndex(value[axis], this.lengths[axis], this.cycle[axis])
-        })
         if (JSON.stringify(this.value) !== JSON.stringify(value)) {
           this.prevIndex = this.value
           this.$emit(this.$options.model.event, value)
         }
+      },
+      setAxisValue(axisIndex, axisValue) {
+        axisValue = this.normalizeAxisValue(axisIndex, axisValue)
+        const value = this.getValue(axisIndex, axisValue)
+        const item = this.normalizeItems[value[0]][value[1]]
+        this.setValue(value)
       }
     },
     mounted() {
@@ -324,8 +345,29 @@
 
       const reset = () => {
         initIndex = this.value.slice()
-        initTransform = null
         initDerection = null
+        initTransform = null
+      }
+
+
+      const initGesture = (ev) => {
+        reset()
+        initTransform = clone(this.transform)
+      }
+
+      const destroyGesture = (ev) => {
+        this._animation.stop()
+        if (initTransform) {
+          if (this.transform.scale === 1 && this.transform.translate.x !== 0 && this.transform.translate.y !== 0) {
+            const duration = 200
+            const oldTransform = initTransform
+            this._animation.start((deltaTime) => {
+              this.transform.translate.x = (0 - oldTransform.translate.x) * (deltaTime / duration) + oldTransform.translate.x
+              this.transform.translate.y = (0 - oldTransform.translate.y) * (deltaTime / duration) + oldTransform.translate.y
+            }, duration)
+          }
+        }
+        reset()
       }
       reset()
 
@@ -336,18 +378,19 @@
         }
       }
       
+      const debounceDestroy = debounce(destroyGesture, 500, true)
+
       el.addEventListener('wheel', (ev) => {
-        scaleTo(this.transform.scale - ev.deltaY / 600)
+        initGesture(ev)
+        const oldScale = this.transform.scale
+        scaleTo(this.transform.scale - ev.deltaY / 600, this.transform.scale)
         ev.preventDefault()
+        debounceDestroy()
       })
 
-      mc.on('panstart pinchstart', (ev) => {
-        reset()
-        initTransform = clone(this.transform)
-      })
-      mc.on('panend pinchend', (ev) => {
-        reset()
-      })
+      
+      mc.on('panstart pinchstart', initGesture)
+      mc.on('panend pinchend', destroyGesture)
 
       mc.on('panmove', (ev) => {
         if (!initTransform) return
@@ -358,24 +401,28 @@
           const axis = initDerection ? 1 : 0
           const p = initDerection ? 'deltaX' : 'deltaY'
           try {
+            this.validateActionable()
             this.setAxisValue(axis, initIndex[axis] + ev[p] * this.speed[axis])
           } catch(e) {
             reset()
           }
         } else {
+          let x = initTransform.translate.x + ev.deltaX
+          let y = initTransform.translate.y + ev.deltaY
+          if (initTransform.scale === 1) {
+            if (!this.transform.translate.x) x = 0
+            if (!this.transform.translate.y) y = 0
+          }
           this.transform = {
             ...this.transform,
-            translate: {
-              x: initTransform.translate.x + ev.deltaX,
-              y: initTransform.translate.y + ev.deltaY
-            }
+            translate: { x, y }
           };
         }
       })
 
       mc.on('pinchmove', (ev) => {
         if (!initTransform) return
-        scaleTo(initTransform.scale * ev.scale)
+        scaleTo(initTransform.scale * ev.scale, initTransform.scale)
       })
     },
     created() {
@@ -386,6 +433,8 @@
           item.loaded = false
           item.thumbLoading = true
           item.loading = true
+          item.thumbError = null
+          item.error = null
         })
         this.normalizeItems = items
       }, {
@@ -393,16 +442,19 @@
       })
 
       this.$watch('currentItemLoading', debounce(loading => {
-        console.log(loading)
         this.debounceCurrentItemLoading = loading
-      }, 1000), {
+      }, 500), {
         immediate: true
+      })
+
+      this.$watch('currentItemError', error => {
+        
+        // this.stepAxis(...this.lastSetAxis)
       })
 
       const sortHandler = (a, b) => a.priority - b.priority
 
       this._load = async ([lengths, items, value, precacheRadius, cycle, thumbPriorityFactor]) => {
-        this.error = null
         const queue = []
         const otherQueue = []
         loop(items, (item, indexs) => {
@@ -413,14 +465,19 @@
           if (!item.loaded) {
             const loadImage = async () => {
               item.loading = true
+              item.error = null
               try {
                 await precacheImage(item.url)
                 item.loaded = true
+              } catch(e) {
+                item.error = e
+                if (!this.keepLoadingWhenError) throw e
               } finally {
                 item.loading = false
               }
             }
             loadImage.priority = priority
+            loadImage.url = item.url
             if (loadImage.priority < 1) {
               queue.push(loadImage)
             } else {
@@ -433,13 +490,18 @@
               item.thumbLoading = true
               try {
                 await precacheImage(item.thumb)
+                item.thumbLoaded = true
+              } catch(e) {
+                item.thumbError = e
+                if (!this.keepLoadingWhenError) throw e
               } finally {
                 item.thumbLoading = false
               }
-              item.thumbLoaded = true
             }
             loadThumb.priority = priority / thumbPriorityFactor
-            if (loadThumb.prototype < 1) {
+            loadThumb.url = item.thumb
+    
+            if (loadThumb.priority < 1) {
               queue.push(loadThumb)
             } else {
               otherQueue.push(loadThumb)
@@ -456,7 +518,6 @@
           if (e === QueueRunner.breakError) {
             // console.info(e.message)
           } else {
-            this.error = e
             throw e
           }
         }
