@@ -1,3 +1,4 @@
 .cache
 dev_dist
 .babelrc
+yarn-error.log
