@@ -21,3 +21,16 @@ const vm = instantiate(Component, {
     maxScale: 3
   },
 })
+
+export default function player(dom, options = {
+  items,
+  value: [0, 0]
+}) {
+  return instantiate(Component, {
+    el: dom,
+    propsData: {
+      ...options
+      maxScale: 3
+    },
+  })
+}
