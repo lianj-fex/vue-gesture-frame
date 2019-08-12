@@ -25,7 +25,7 @@
   .container
     overflow hidden
   .img
-    
+
     background-position center center
     background-repeat no-repeat
     visibility hidden
@@ -40,7 +40,7 @@
 
 </style>
 <script>
-  import Hammer from 'hammerjs' 
+  import Hammer from 'hammerjs'
   import Animation from './animation'
   import QueueRunner from './queue-runner'
   import waitUntil from './wait-until'
@@ -56,7 +56,7 @@
     },
   }
 
- 
+
   function getPrecachePriority([dy, dx], [ry, rx]) {
     // https://math.stackexchange.com/questions/76457/check-if-a-point-is-within-an-ellipse
     return (dx / rx) ** 2 + (dy / ry) ** 2
@@ -94,7 +94,7 @@
       mode: {
         default: 'contain'
       },
-      // 内容区域的padding, 
+      // 内容区域的padding,
       // size = string | number, 类型为
       // size | [size] | [size, size] | [size, size, size] | [size, size, size, size]
       padding: {
@@ -144,7 +144,7 @@
       this._animation = animation
       const vm = this
 
-      const btnParams = { 
+      const btnParams = {
         up: [0, -1],
         down: [0, 1],
         left: [1, -1],
@@ -168,14 +168,16 @@
           e.preventDefault()
           const document = e.target.ownerDocument
           if (!document) return
-          const index = vm.value
+
+          const index = vm.value;
+
           animation.start((t) => {
             vm.validateActionable()
-            vm.setAxisValue(axisIndex, index[axisIndex] + t * vm.autoSpeed[axisIndex] * step)
+            // 第二个参数+1，是为了很快的单击也能切换一帧
+            vm.setAxisValue(axisIndex, (index[axisIndex] + t * vm.autoSpeed[axisIndex] * step + 1))
           }).catch((e) => {})
           await waitUntil(document, ['mouseup', 'touchend'])
           animation.stop()
-
         }
         memo[k] = {
           mousedown: down,
@@ -285,7 +287,7 @@
       },
       getImageUrl(item, prevItem) {
         return (
-          item.loaded ? item.url : 
+          item.loaded ? item.url :
           item.thumb && item.thumbLoaded ? item.thumb :
           prevItem.loaded ? prevItem.url :
           prevItem.thumb && prevItem.thumbLoaded ? prevItem.thumb :
@@ -378,7 +380,7 @@
           scale: Math.min(Math.max(v, 1), this.maxScale)
         }
       }
-      
+
       const debounceDestroy = debounce(destroyGesture, 500, true)
 
       el.addEventListener('wheel', (ev) => {
@@ -389,7 +391,7 @@
         debounceDestroy()
       })
 
-      
+
       mc.on('panstart pinchstart', initGesture)
       mc.on('panend pinchend', destroyGesture)
 
@@ -449,7 +451,7 @@
       })
 
       this.$watch('currentItemError', error => {
-        
+
         // this.stepAxis(...this.lastSetAxis)
       })
 
@@ -501,7 +503,7 @@
             }
             loadThumb.priority = priority / thumbPriorityFactor
             loadThumb.url = item.thumb
-    
+
             if (loadThumb.priority < 1) {
               queue.push(loadThumb)
             } else {
@@ -529,7 +531,7 @@
 
       let queueRunner = new QueueRunner([], 2)
       this.$watch(
-        this._getLoadParams, 
+        this._getLoadParams,
         this._load, {
         immediate: true
       })
