@@ -173,8 +173,8 @@
 
           animation.start((t) => {
             vm.validateActionable()
-            // 第二个参数+1，是为了很快的单击也能切换一帧
-            vm.setAxisValue(axisIndex, (index[axisIndex] + t * vm.autoSpeed[axisIndex] * step + 1))
+            // 第二个参数向上取整，是为了很快的单击也能切换一帧
+            vm.setAxisValue(axisIndex, Math.ceil(index[axisIndex] + t * vm.autoSpeed[axisIndex] * step))
           }).catch((e) => {})
           await waitUntil(document, ['mouseup', 'touchend'])
           animation.stop()
