@@ -291,7 +291,7 @@
           item.thumb && item.thumbLoaded ? item.thumb :
           prevItem.loaded ? prevItem.url :
           prevItem.thumb && prevItem.thumbLoaded ? prevItem.thumb :
-          '__blank'
+          '_blank'
         )
       },
       url(url) {
