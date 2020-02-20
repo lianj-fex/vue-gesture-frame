@@ -29,7 +29,7 @@ export default function player(dom, options = {
   return instantiate(Component, {
     el: dom,
     propsData: {
-      ...options
+      ...options,
       maxScale: 3
     },
   })

@@ -138,6 +138,21 @@
         type: Array,
         default: () => [0, 0]
       },
+      // 当放大后，左键作用变为拖动
+      leftMouseButtonMovingAfterScale: {
+        type: Boolean,
+        default: true
+      },
+      // 一倍缩放情况是否允许拖动
+      canMovingWhen1x: {
+        type: Boolean,
+        default: false,
+      },
+      // 拖动时判断拖动偏向，并锁定另一轴
+      lockRotateDirection: {
+        type: Boolean,
+        default: false
+      },
     },
     data() {
       const animation = new Animation()
@@ -344,16 +359,20 @@
 
       let initTransform
       let initIndex
-      let initDerection = null
+      let initDerectionAxis = null
+      let destoryTimeout = null
 
       const reset = () => {
         initIndex = this.value.slice()
-        initDerection = null
+        initDerectionAxis = null
         initTransform = null
+        if (destoryTimeout) {
+          clearTimeout(destoryTimeout)
+        }
       }
 
 
-      const initGesture = (ev) => {
+      const initGesture = () => {
         reset()
         initTransform = clone(this.transform)
       }
@@ -363,7 +382,7 @@
         if (initTransform) {
           if (this.transform.scale === 1 && this.transform.translate.x !== 0 && this.transform.translate.y !== 0) {
             const duration = 200
-            const oldTransform = initTransform
+            const oldTransform = { ...this.transform }
             this._animation.start((deltaTime) => {
               this.transform.translate.x = (0 - oldTransform.translate.x) * (deltaTime / duration) + oldTransform.translate.x
               this.transform.translate.y = (0 - oldTransform.translate.y) * (deltaTime / duration) + oldTransform.translate.y
@@ -381,7 +400,28 @@
         }
       }
 
-      const debounceDestroy = debounce(destroyGesture, 500, true)
+      const moveImage = ({deltaX, deltaY}) => {
+        let x = initTransform.translate.x + deltaX
+        let y = initTransform.translate.y + deltaY
+        if (initTransform.scale === 1 && !this.canMovingWhen1x) {
+          if (!this.transform.translate.x) x = 0
+          if (!this.transform.translate.y) y = 0
+        }
+        this.transform = {
+          ...this.transform,
+          translate: { x, y }
+        };
+      }
+
+      
+      const debounceDestroy = () => {
+        if (destoryTimeout) {
+          clearTimeout(destoryTimeout)
+        }
+        destoryTimeout = setTimeout(() => {
+          destroyGesture()
+        }, 500)
+      }
 
       el.addEventListener('wheel', (ev) => {
         initGesture(ev)
@@ -390,36 +430,54 @@
         ev.preventDefault()
         debounceDestroy()
       })
-
+      el.addEventListener('mousedown', (e) => {
+        if (e.which === 3) {
+          initGesture(e)
+          let prevE = e;
+          const _move = (e) => {
+            const deltaX = e.screenX - prevE.screenX;
+            const deltaY = e.screenY - prevE.screenY;
+            moveImage({deltaX, deltaY});
+          }
+          const _up = (e) => {
+            debounceDestroy();
+            document.removeEventListener('mousemove', _move);
+            document.removeEventListener('mouseup', _up);
+          }
+          document.addEventListener('mousemove', _move);
+          document.addEventListener('mouseup', _up)
+        }
+      });
+      el.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+      })
 
       mc.on('panstart pinchstart', initGesture)
       mc.on('panend pinchend', destroyGesture)
 
       mc.on('panmove', (ev) => {
         if (!initTransform) return
-        if (initTransform.scale === 1) {
-          if (initDerection === null) {
-            initDerection = Math.abs(ev.deltaY) < Math.abs(ev.deltaX)
-          }
-          const axis = initDerection ? 1 : 0
-          const p = initDerection ? 'deltaX' : 'deltaY'
+        if (initTransform.scale === 1 || !this.leftMouseButtonMovingAfterScale) {
           try {
-            this.validateActionable()
-            this.setAxisValue(axis, initIndex[axis] + ev[p] * this.speed[axis])
+            if (this.lockRotateDirection) {
+              if (initDerectionAxis === null) {
+                initDerectionAxis = Math.abs(ev.deltaY) < Math.abs(ev.deltaX) ? 1 : 0
+              }
+              const axis = initDerectionAxis
+              const p = initDerectionAxis ? 'deltaX' : 'deltaY'
+      
+              this.validateActionable()
+              this.setAxisValue(initDerectionAxis, initIndex[initDerectionAxis] + ev[p] * this.speed[initDerectionAxis])
+
+            } else {
+              this.setAxisValue(0, initIndex[0] + ev.deltaY * this.speed[0])
+              this.setAxisValue(1, initIndex[1] + ev.deltaX * this.speed[1])
+            }
           } catch(e) {
             reset()
           }
         } else {
-          let x = initTransform.translate.x + ev.deltaX
-          let y = initTransform.translate.y + ev.deltaY
-          if (initTransform.scale === 1) {
-            if (!this.transform.translate.x) x = 0
-            if (!this.transform.translate.y) y = 0
-          }
-          this.transform = {
-            ...this.transform,
-            translate: { x, y }
-          };
+          moveImage(ev)
         }
       })
 
