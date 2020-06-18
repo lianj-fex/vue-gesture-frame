@@ -214,22 +214,31 @@
     },
     computed: {
       progress() {
-        let total = 0
-        let loaded = 0
+        const items = [];
+        const thumbLoadedItems = [];
+        const loadedItems = [];
+        let total = 0;
+        let loaded = 0;
+        let thumbTotal = 0;
+        let thumbLoaded = 0;
         loop(this.normalizeItems, item => {
+          items.push(item);
           if (item.thumb) {
-            total ++
+            total ++;
           }
           total ++
           if (item.loaded) {
-            loaded++
+            loaded++;
+            loadedItems.push(item);
           }
           if (item.thumbLoaded) {
-            loaded ++
+            loaded ++;
+            thumbLoadedItems.push(item);
           }
         })
+
         return {
-          total, loaded
+          total, loaded, loadedItems, thumbLoadedItems, items
         }
       },
       btnShowings() {
